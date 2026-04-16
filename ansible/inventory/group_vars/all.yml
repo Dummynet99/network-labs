@@ -1,0 +1,27 @@
+# 共通設定
+bgp_asn_spine: 65000
+
+# ノードごとの個別設定（本来は host_vars に分けるのが理想ですが、最初はここで一括管理）
+nodes:
+  spine1:
+    asn: 65000
+    lo0: 10.0.0.100
+    peers:
+      - { name: leaf1, remote_asn: 65001, my_ip: 192.168.1.0, peer_ip: 192.168.1.1, intf: eth1 }
+      - { name: leaf2, remote_asn: 65002, my_ip: 192.168.1.2, peer_ip: 192.168.1.3, intf: eth2 }
+  leaf1:
+  
+    asn: 65001
+    lo0: 10.0.0.1
+    peers:
+      - { name: spine1, remote_asn: 65000, my_ip: 192.168.1.1, peer_ip: 192.168.1.0, intf: eth1 }
+  leaf2:
+    asn: 65002
+    lo0: 10.0.0.2
+    peers:
+      - { name: spine1, remote_asn: 65000, my_ip: 192.168.1.3, peer_ip: 192.168.1.2, intf: eth1 }
+
+overlay:
+  vni: 10
+  bridge_name: br10
+  vxlan_intf: vx10

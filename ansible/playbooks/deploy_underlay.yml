@@ -1,0 +1,39 @@
+---
+- name: Deploy Underlay BGP (Phase 1)
+  hosts: all
+  gather_facts: false
+  tasks:
+    # 1. デーモン設定 (zebra, bgpd を確実に有効化)
+    - name: Force enable BGP daemon
+      copy:
+        dest: /etc/frr/daemons
+        content: |
+          zebra=yes
+          bgpd=yes
+        owner: frr
+        group: frr
+        mode: '0644'
+
+    # 2. OSレベルでインターフェースを叩き起こす (これが「落ちる」対策)
+    - name: Ensure interfaces are UP in OS
+      raw: "ip link set {{ item.intf }} up"
+      loop: "{{ nodes[inventory_hostname].peers }}"
+      ignore_errors: yes
+
+    # 3. コンフィグ流し込み
+    - name: Deploy frr.conf
+      template:
+        src: ../roles/frr/templates/frr.conf.j2
+        dest: /etc/frr/frr.conf
+        owner: frr
+        group: frr
+        mode: '0644'
+
+    # 4. FRR の再起動をやめ、設定の「リロード」に変更
+    - name: Reload FRR configuration
+      raw: vtysh -f /etc/frr/frr.conf
+      # これならコンテナは死なず、配線も維持されます
+
+    # 5. bgpdの起動
+    - name: Ensure bgpd is running (Manual start if missing)
+      raw: pgrep bgpd || /usr/lib/frr/bgpd -d -f /etc/frr/frr.conf

@@ -1,0 +1,19 @@
+name: phase1-frr
+
+topology:
+  nodes:
+    # Spine
+    spine1:
+      kind: linux
+      image: frrouting/frr:latest
+    # Leaf
+    leaf1:
+      kind: linux
+      image: frrouting/frr:latest
+    leaf2:
+      kind: linux
+      image: frrouting/frr:latest
+
+  links:
+    - endpoints: ["spine1:eth1", "leaf1:eth1"]
+    - endpoints: ["spine1:eth2", "leaf2:eth1"]

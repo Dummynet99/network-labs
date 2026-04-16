@@ -1,0 +1,25 @@
+! FRR Configuration for {{ inventory_hostname }}
+hostname {{ inventory_hostname }}
+!
+{% for peer in nodes[inventory_hostname].peers %}
+interface {{ peer.intf }}
+ ip address {{ peer.my_ip }}/31
+!
+{% endfor %}
+interface lo
+ ip address {{ nodes[inventory_hostname].lo0 }}/32
+!
+router bgp {{ nodes[inventory_hostname].asn }}
+ bgp router-id {{ nodes[inventory_hostname].lo0 }}
+ no bgp ebgp-requires-policy
+ {% for peer in nodes[inventory_hostname].peers %}
+ neighbor {{ peer.peer_ip }} remote-as {{ peer.remote_asn }}
+ neighbor {{ peer.peer_ip }} description to_{{ peer.name }}
+ {% endfor %}
+ !
+ address-family ipv4 unicast
+  network {{ nodes[inventory_hostname].lo0 }}/32
+  {% for peer in nodes[inventory_hostname].peers %}
+  neighbor {{ peer.peer_ip }} activate
+  {% endfor %}
+ exit-address-family
