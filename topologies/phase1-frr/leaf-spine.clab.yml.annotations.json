@@ -1,0 +1,33 @@
+{
+  "freeTextAnnotations": [],
+  "freeShapeAnnotations": [],
+  "trafficRateAnnotations": [],
+  "groupStyleAnnotations": [],
+  "networkNodeAnnotations": [],
+  "nodeAnnotations": [
+    {
+      "id": "spine1",
+      "position": {
+        "x": 360,
+        "y": 380
+      }
+    },
+    {
+      "id": "leaf1",
+      "position": {
+        "x": 480,
+        "y": 260
+      }
+    },
+    {
+      "id": "leaf2",
+      "position": {
+        "x": 520,
+        "y": 400
+      }
+    }
+  ],
+  "edgeAnnotations": [],
+  "aliasEndpointAnnotations": [],
+  "viewerSettings": {}
+}

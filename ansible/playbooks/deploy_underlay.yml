@@ -37,3 +37,20 @@
     # 5. bgpdの起動
     - name: Ensure bgpd is running (Manual start if missing)
       raw: pgrep bgpd || /usr/lib/frr/bgpd -d -f /etc/frr/frr.conf
+
+    # 6. Linux Bridge と VXLAN インターフェースの作成 (Leaf のみ実行)
+    - name: Create VXLAN and Bridge on Leafs
+      when: "'leafs' in group_names"
+      raw: |
+        # ブリッジ作成
+        ip link add {{ overlay.bridge_name }} type bridge
+        ip link set {{ overlay.bridge_name }} up
+        # VXLAN インターフェース作成 (VNI 10, VTEP Source は Loopback)
+        ip link add {{ overlay.vxlan_intf }} type vxlan id {{ overlay.vni }} local {{ nodes[inventory_hostname].lo0 }} dstport 4789
+        # VXLAN をブリッジに収容
+        ip link set {{ overlay.vxlan_intf }} master {{ overlay.bridge_name }}
+        ip link set {{ overlay.vxlan_intf }} up
+        # クライアントが繋がっている eth2 をブリッジに接続
+        ip link set eth2 master {{ overlay.bridge_name }}
+        ip link set eth2 up
+      ignore_errors: yes
