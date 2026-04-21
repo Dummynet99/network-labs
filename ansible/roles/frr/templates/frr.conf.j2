@@ -4,6 +4,7 @@ hostname {{ inventory_hostname }}
 {% for peer in nodes[inventory_hostname].peers %}
 interface {{ peer.intf }}
  ip address {{ peer.my_ip }}/31
+ no shutdown
 !
 {% endfor %}
 interface lo
@@ -22,4 +23,9 @@ router bgp {{ nodes[inventory_hostname].asn }}
   {% for peer in nodes[inventory_hostname].peers %}
   neighbor {{ peer.peer_ip }} activate
   {% endfor %}
+ address-family l2vpn evpn
+  {% for peer in nodes[inventory_hostname].peers %}
+  neighbor {{ peer.peer_ip }} activate
+  {% endfor %}
+  advertise-all-vni
  exit-address-family

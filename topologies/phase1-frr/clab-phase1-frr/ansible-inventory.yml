@@ -7,9 +7,13 @@ all:
   children:
     linux:
       hosts:
+        clab-phase1-frr-client1:
+          ansible_host: 172.20.20.6
+        clab-phase1-frr-client2:
+          ansible_host: 172.20.20.5
         clab-phase1-frr-leaf1:
-          ansible_host: 172.20.20.2
-        clab-phase1-frr-leaf2:
-          ansible_host: 172.20.20.4
-        clab-phase1-frr-spine1:
           ansible_host: 172.20.20.3
+        clab-phase1-frr-leaf2:
+          ansible_host: 172.20.20.2
+        clab-phase1-frr-spine1:
+          ansible_host: 172.20.20.4
