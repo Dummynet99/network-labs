@@ -10,6 +10,14 @@ interface {{ peer.intf }}
 interface lo
  ip address {{ nodes[inventory_hostname].lo0 }}/32
 !
+{% for v in overlay %}
+interface {{ v.bridge }}
+ ip address {{ v.gw_ip }}
+ ! Anycast Gatewayを有効化（FRR 8.x以降の記法）
+ ip address 10.10.{{ v.vni }}.254/24
+!
+{% endfor %}
+!
 router bgp {{ nodes[inventory_hostname].asn }}
  bgp router-id {{ nodes[inventory_hostname].lo0 }}
  no bgp ebgp-requires-policy
@@ -23,9 +31,11 @@ router bgp {{ nodes[inventory_hostname].asn }}
   {% for peer in nodes[inventory_hostname].peers %}
   neighbor {{ peer.peer_ip }} activate
   {% endfor %}
+  maximum-paths 64
  address-family l2vpn evpn
   {% for peer in nodes[inventory_hostname].peers %}
   neighbor {{ peer.peer_ip }} activate
   {% endfor %}
   advertise-all-vni
+  advertise-default-gw
  exit-address-family

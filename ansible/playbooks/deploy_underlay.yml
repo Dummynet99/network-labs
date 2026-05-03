@@ -38,19 +38,36 @@
     - name: Ensure bgpd is running (Manual start if missing)
       raw: pgrep bgpd || /usr/lib/frr/bgpd -d -f /etc/frr/frr.conf
 
-    # 6. Linux Bridge と VXLAN インターフェースの作成 (Leaf のみ実行)
-    - name: Create VXLAN and Bridge on Leafs
+    # 7. Linux Bridge と VXLAN インターフェースの作成 と AnycastGWの作成（複数VNI用）
+    - name: Setup VXLAN and Anycast GW
       when: "'leafs' in group_names"
       raw: |
         # ブリッジ作成
-        ip link add {{ overlay.bridge_name }} type bridge
-        ip link set {{ overlay.bridge_name }} up
-        # VXLAN インターフェース作成 (VNI 10, VTEP Source は Loopback)
-        ip link add {{ overlay.vxlan_intf }} type vxlan id {{ overlay.vni }} local {{ nodes[inventory_hostname].lo0 }} dstport 4789
+        {% for v in overlay %}
+        ip link add {{ v.bridge }} type bridge || true
+        # 全ての Leaf で共通の仮想 MAC を設定
+        ip link set {{ v.bridge }} address 00:00:5e:00:01:01 
+        ip link set {{ v.bridge }} up
+        
+        # VXLAN インターフェース作成
+        ip link add {{ v.vxlan }} type vxlan id {{ v.vni }} local {{ nodes[inventory_hostname].lo0 }} dstport 4789 || true
+        
         # VXLAN をブリッジに収容
-        ip link set {{ overlay.vxlan_intf }} master {{ overlay.bridge_name }}
-        ip link set {{ overlay.vxlan_intf }} up
-        # クライアントが繋がっている eth2 をブリッジに接続
-        ip link set eth2 master {{ overlay.bridge_name }}
+        ip link set {{ v.vxlan }} master {{ v.bridge }}
+        ip link set {{ v.vxlan }} up
+        {% endfor %}
+        
+        # Leaf1 のポート収容
+        {% if inventory_hostname == 'leaf1' %}
+        ip link set eth2 master br10 || true
         ip link set eth2 up
+        {% endif %}
+        
+        # Leaf2 のポート収容
+        {% if inventory_hostname == 'leaf2' %}
+        ip link set eth2 master br10 || true
+        ip link set eth4 master br20 || true
+        ip link set eth2 up
+        ip link set eth3 up
+        {% endif %}
       ignore_errors: yes

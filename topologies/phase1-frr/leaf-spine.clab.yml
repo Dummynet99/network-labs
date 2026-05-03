@@ -6,6 +6,9 @@ topology:
     spine1:
       kind: linux
       image: frrouting/frr:latest
+    spine2:
+      kind: linux
+      image: frrouting/frr:latest
     # Leaf
     leaf1:
       kind: linux
@@ -18,16 +21,29 @@ topology:
       image: alpine:latest
       exec:
         - ip addr add 10.10.10.1/24 dev eth1
+        - ip route add 10.10.0.0/16 via 10.10.10.254
         - ip link set eth1 up
     client2:
       kind: linux
       image: alpine:latest
       exec:
         - ip addr add 10.10.10.2/24 dev eth1
+        - ip route add 10.10.0.0/16 via 10.10.10.254
+        - ip link set eth1 up
+    client3:
+      kind: linux
+      image: alpine:latest
+      exec:
+        - ip addr add 10.10.20.3/24 dev eth1
+        # VNI 20 のゲートウェイ (10.10.20.254) を指定
+        - ip route add 10.10.0.0/16 via 10.10.20.254 
         - ip link set eth1 up
 
   links:
     - endpoints: ["spine1:eth1", "leaf1:eth1"]
     - endpoints: ["spine1:eth2", "leaf2:eth1"]
+    - endpoints: ["spine2:eth1", "leaf1:eth3"]
+    - endpoints: ["spine2:eth2", "leaf2:eth3"]
     - endpoints: ["client1:eth1", "leaf1:eth2"]
     - endpoints: ["client2:eth1", "leaf2:eth2"]
+    - endpoints: ["client3:eth1", "leaf2:eth4"]
